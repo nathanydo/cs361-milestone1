@@ -241,12 +241,30 @@ app.delete("/delete-task/:taskId", authenticateToken, async (req, res) => {
             return res.status(404).json({ error: true, message: "Task not found"});
         }
 
-
         await Task.deleteOne({_id: taskId, userId: user._id});
 
         return res.json({
             error: false,
             message: "Task deleted successfully",
+        });
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: "Internal Server Error"
+        });
+    }
+})
+
+//Delete all Task
+app.delete("/delete-all-tasks", authenticateToken, async (req, res) => {
+    const { user } = req.user;
+
+    try {
+        await Task.deleteMany({userId: user._id});
+
+        return res.json({
+            error: false,
+            message: "All tasks deleted successfully",
         });
     } catch (error) {
         return res.status(500).json({
@@ -287,6 +305,32 @@ app.put("/update-task-pinned/:taskId", authenticateToken, async (req, res) => {
     }
 });
 
-app.listen(8000);
+//Search Tasks
+app.get("/search-tasks/", authenticateToken, async (req, res) => {
+    const { user } = req.user;
+    const { query } = req.query;
+
+    if (!query) {
+        return res.status(400).json({error: true, message: "Search query is required"});
+    }
+
+    try {
+        const matchingTasks = await Task.find({
+            userId: user._id,
+            $or: [
+                {title: { $regex: new RegExp(query, "i")}},
+                {content: { $regex: new RegExp(query, "i")}},
+            ],
+        });
+
+        return res.json({error: false, tasks: matchingTasks, message: "Tasks retrieved successfully"});
+    } catch (error) {
+        return res.status(500).json({
+            error: true,
+            message: "Internal Server Error"
+        })
+    }
+})
+app.listen(8080);
 
 module.exports = app;
