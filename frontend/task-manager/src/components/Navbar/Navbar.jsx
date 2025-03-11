@@ -32,8 +32,8 @@ const Navbar = ({ userInfo, onSearchTask, handleClearSearch}) => {
                 <h2 className="text-2xl font-extrabold py-2 px-2 bg-gradient-to-r from-lime-400/75 to-lime-600 bg-clip-text text-transparent">ZenTask</h2>
                 <img src={logo} alt="ZenTask_logo" className="h-8 w-8 rounded-t-xl rounded-br-xl bg-amber-300/50"/>
             </div>
-            {location.pathname !== "/login" && location.pathname !== "/signup" && (
-            <Searchbar 
+            {location.pathname === "/dashboard" && (
+            <Searchbar
                 value={searchQuery}
                 onChange={({ target }) => {
                     setSearchQuery(target.value);

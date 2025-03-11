@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import Navbar from "../../components/Navbar/Navbar";
 import PasswordInput from "../../components/Input/PasswordInput";
 import { Link, useNavigate } from "react-router-dom";
-import { validateEmail } from "../../utils/helper";
+import { validateEmail } from "../../utils/validateEmail";
 import axiosInstance from "../../utils/axiosInstance";
 import PageDescription from "../../components/PageDescription/PageDescription";
 
@@ -17,12 +17,14 @@ const SignUp = () => {
 
     const handleSignUp = async (e) => {
         e.preventDefault();
+        const isValidEmail = await validateEmail(email);
 
         if (!name) {
             setError("Please enter your name.");
             return;
         }
-        if (!validateEmail(email)) {
+        console.log(isValidEmail)
+        if (!isValidEmail) {
             setError("Please enter your email.");
             return;
         }
@@ -65,7 +67,7 @@ const SignUp = () => {
         <>
         <Navbar />
         <div className="flex items-center justify-center mt-20">
-            <div className="w-96 p-6 border rounded bg-white shadow-lg rounded-lg">
+            <div className="w-96 p-6 border rounded-lg bg-white shadow-lg">
                 <form onSubmit={handleSignUp}>
                     <h4 className="text-2xl mb-7">SignUp</h4>
                     

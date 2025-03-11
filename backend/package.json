@@ -16,7 +16,10 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon index.js"
+    "task": "nodemon index.js",
+    "email": "nodemon emailvalidation.js",
+    "toast": "nodemon toastservice.js",
+    "calendar": "nodemon calendar.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

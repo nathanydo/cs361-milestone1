@@ -9,7 +9,22 @@
   }
 
   body {
-    background-color: #f7f7f7;
+    background-color: #faf4e1; /* Sandish color */
+    background-image: 
+      radial-gradient(circle, #f8f0d9a1 30px, transparent 15px),
+      radial-gradient(circle, #fae9bf 8px, transparent 9px),
+      radial-gradient(circle, #ffedbbbb 6px, transparent 9px),
+      radial-gradient(circle, #e5dab97a 4px, transparent 6px);
+    background-size: 
+      120px 90px, 
+      150px 150px, 
+      150px 150px, 
+      180px 190px; /* Adjust the size of the circles */
+    background-position: 
+      0 0, 
+      30px 25px, 
+      50px 50px, 
+      75px 75px;
     overflow-x: hidden;
   }
 
@@ -18,7 +33,7 @@
 @layer components{
 
   .input-box {
-    @apply  w-full text-sm flex items-center bg-transparent border-[1.5px] py-3 px-5 rounded mb-3 mr-3 rounded outline-none;
+    @apply  w-full text-sm flex items-center bg-transparent border-[1.5px] py-3 px-5 rounded mb-3 mr-3 outline-none;
   }
 
   .btn-primary {

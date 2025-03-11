@@ -3,7 +3,7 @@ import Navbar from "../../components/Navbar/Navbar";
 import { Link, useNavigate } from "react-router-dom";
 import PasswordInput from "../../components/Input/PasswordInput";
 import PageDescription from "../../components/PageDescription/PageDescription";
-import { validateEmail } from "../../utils/helper";
+import { validateEmail } from "../../utils/validateEmail";
 import axiosInstance from "../../utils/axiosInstance";
 
 const Login = () => {
@@ -16,8 +16,8 @@ const Login = () => {
 
     const handleLogin = async (e) => {
         e.preventDefault();
-
-        if (!validateEmail(email)) {
+        const isValidEmail = await validateEmail(email);
+        if (!isValidEmail) {
             setError("Please enter a valid email address.");
             return;
         }
@@ -53,7 +53,7 @@ const Login = () => {
     return (<>
         <Navbar />
         <div className="flex items-center justify-center mt-20">
-            <div className="w-96 p-6 border rounded bg-white shadow-lg rounded-lg">
+            <div className="w-96 p-6 border border-emerald-700 rounded bg-white shadow-lg rounded-lg">
                 <form onSubmit={handleLogin}>
                     <h4 className="text-2xl mb-7">Login</h4>
                     

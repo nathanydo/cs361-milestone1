@@ -2,20 +2,23 @@ import React, {useState, useEffect} from "react";
 import TagInput from "../../components/Input/TagInput";
 import { MdClose} from "react-icons/md";
 import axiosInstance from "../../utils/axiosInstance";
+import { showToast } from "../../utils/toastService";
 
 const AddEditTasks = ({taskData, type, getAllTasks, onClose, showToastMessage}) => {  
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [tags, setTags] = useState([]);
     const [error, setError] = useState(null);
+    const [dueDate, setDueDate] = useState("");
 
-      // ✅ Update state when taskData changes
+      // Update state when taskData changes
       useEffect(() => {
 
         if (taskData) {
             setTitle(taskData.title || "");
             setContent(taskData.content || "");
             setTags(taskData.tags || []);
+            setDueDate(taskData.dueDate ? new Date(taskData.dueDate).toISOString().split('T', 1)[0] : "");
         }
     }, [taskData]);
 
@@ -26,6 +29,7 @@ const AddEditTasks = ({taskData, type, getAllTasks, onClose, showToastMessage}) 
                 title,
                 content,
                 tags,
+                dueDate: new Date(dueDate).toISOString().split('T', 1)[0]
             });
 
             if(response.data && response.data.tasks) {
@@ -51,6 +55,7 @@ const AddEditTasks = ({taskData, type, getAllTasks, onClose, showToastMessage}) 
                 title,
                 content,
                 tags,
+                dueDate: new Date(dueDate).toISOString().split('T')[0]
             });
 
             if(response.data && response.data.tasks){
@@ -75,18 +80,19 @@ const AddEditTasks = ({taskData, type, getAllTasks, onClose, showToastMessage}) 
 
         if(!content){
             setError("Please enter content");
+            return;
         }
 
         setError("");
 
         if(type === 'edit'){
             await editTask()
-            showToastMessage("Task updated successfully");
+            showToast("Task updated successfully", "success");
             getAllTasks();
             onClose();
         } else {
             await addNewTasks()
-            showToastMessage("Task added successfully");
+            showToast("Task added successfully", "success");
             getAllTasks();
             onClose();
         }
@@ -99,22 +105,22 @@ const AddEditTasks = ({taskData, type, getAllTasks, onClose, showToastMessage}) 
             </button>
 
             <div className="flex flex-col gap-2">
-                <label className="input-label">Title</label>
+                <label className="input-label text-xl">Title</label>
                 <input 
                     type="text" 
-                    className="text-2xl text-slate-900 font-medium outline-none w-full" 
-                    placeholder="Title"
+                    className="text-2xl text-slate-900 font-medium outline-none w-full mb-2" 
+                    placeholder="Meal Prep for the Week"
                     value={title}
                     onChange={({target}) => setTitle(target.value)}
                 />
             </div>
             
             <div className="flex flex-col gap-2">
-                <label className="input-label">Content</label>
+                <label className="input-label text-lg">Content</label>
                 <textarea
                     type="text"
                     className="text-slate-900 font-normal outline-none w-full"
-                    placeholder="Content"
+                    placeholder="Go to the market and buy groceries for the week..."
                     rows={10}
                     value={content}
                     onChange={({target}) => setContent(target.value)}
@@ -122,8 +128,18 @@ const AddEditTasks = ({taskData, type, getAllTasks, onClose, showToastMessage}) 
             </div>
 
             <div className="mt-3">
-                <label className="input-label">Tags</label>
+                <label className="input-label text-lg">Tags</label>
                 <TagInput tags={tags} setTags={setTags}/>
+            </div>
+
+            <div className="mt-3">
+                <label className="input-label text-lg">Due Date</label>
+                <input
+                    type="date"
+                    className="text-slate-900 font-normal outline-none w-full"
+                    value={dueDate}
+                    onChange={({ target }) => setDueDate(target.value)}
+                />
             </div>
 
             {error && <p className="text-red-500 text-xs pt-4">{error}</p>}

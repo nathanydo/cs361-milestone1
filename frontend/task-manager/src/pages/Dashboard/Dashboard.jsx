@@ -1,38 +1,55 @@
-import React, {useEffect, useState} from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../../components/Navbar/Navbar";
-import TaskCard from "../../components/Cards/TaskCard";
-import { MdAdd, MdDelete} from "react-icons/md";
-import AddEditTasks from "./AddEditTasks";
-import Modal from "react-modal";
-import { useNavigate } from "react-router-dom";
 import axiosInstance from "../../utils/axiosInstance";
-import Toast from "../../components/ToastMessage/Toast";
-import DeleteWarningModal from "../../components/DeleteWarningModal/DeleteWarningModal";
+import SideMenu from "../../components/SideMenu/SideMenu";
+import TaskCard from "../../components/Cards/TaskCard";
 import EmptyCard from "../../components/Cards/EmptyCard";
+import TaskViewModal from "../../components/Cards/ViewTask";
+import Modal from "react-modal";
+import AddEditTasks from "../Tasks/AddEditTasks";
+import tripleBamboo from "../../assets/images/triple_bamboo.webp";
+import useUserInfo from "../../utils/useUserInfo";
+import { showToast } from "../../utils/toastService";
+import Toast from "../../components/ToastMessage/Toast";
 
 const Dashboard = () => {
-
+    const userInfo = useUserInfo();
+    const [allTasks, setAllTasks] = useState([]);
+    const [viewTaskModal, setViewTaskModal] = useState({
+        isShow: false,
+        task: null,
+    });
     const [openAddEditModal, setOpenAddEditModal] = useState({
         isShow: false,
         type: "add",
         data: null,
     });
-
-    const [showToastMsg, setShowToastMsg] = useState ({
-        isShown: false,
-        message: "",
-        type: "add",
-    });
-
-    const [allTasks, setallTasks] = useState([])
-    const [userInfo, setUserInfo] = useState(null);
-    const [deleteModal, setDeleteModal] = useState({
-        isShow: false,
-        task: null,
-    })
     const [isSearch, setIsSearch] = useState(false);
 
-    const navigate = useNavigate();
+    const getAllTasks = async () => {
+        try {
+            const response = await axiosInstance.get("/get-all-tasks");
+            if (response.data && response.data.tasks) {
+                setAllTasks(response.data.tasks);
+            }
+        } catch (error) {
+            console.log("An unexpected error occurred. Please try again");
+        }
+    };
+
+    const getTask = async (taskId) => {
+        try {
+            const response = await axiosInstance.get("/get-task/" + taskId);
+            if (response.data && response.data.tasks) {
+                setViewTaskModal({
+                    isShow: true,
+                    task: response.data.tasks,
+                });
+            }
+        } catch (error) {
+            console.log("An unexpected error occurred. Please try again");
+        }
+    };
 
     const handleEdit = (taskDetails) => {
         setOpenAddEditModal({
@@ -42,211 +59,140 @@ const Dashboard = () => {
         });
     };
 
-    const showToastMessage = (message, type) => {
-        setShowToastMsg({
-            isShown: true,
-            message,
-            type,
-        });
-    };
+    // Complete Tasks
+    // const handleDelete = (task) => {
+    //     setDeleteModal({
+    //         isShow: true,
+    //         task,
+    //     });
+    // };
 
-    const handleCloseToast = () => {
-        setShowToastMsg({
-            isShown: false,
-            message: "",
-        });
-    };
-
-    //Get User Info
-    const getUserInfo = async() => {
-        try {
-            const response = await axiosInstance.get("/get-user");
-            if (response.data && response.data.user) {
-                setUserInfo(response.data.user);
-            }
-        } catch (error) {
-            if (error.response.status === 401){
-                localStorage.clear()
-                navigate("/login");
-            }
-        }
-    };
-
-    //Get all tasks
-    const getAllTasks = async () => {
-        try{
-            const response = await axiosInstance.get("/get-all-tasks");
-
-
-                if (response.data && response.data.tasks) {
-                    setallTasks(response.data.tasks);
-                }
-
-            } catch (error) {
-                console.log("An unexpected error occured. Please try again");
-            }
-        };
-    //Delete Task
-    const handleDelete = (task) => {
-        setDeleteModal({
-            isShow: true,
-            task,
-        });
-    };
-
-    const confirmDelete = () => {
-        if (deleteModal.task) {
-            deleteTask(deleteModal.task);
-            setDeleteModal({
-                isShow: false,
-                task: null,
-            });
-        }
-    };
-
-    const cancelDelete = () => {
-        setDeleteModal({
-            isShow: false,
-            task: null,
-        });
-    };
 
     const deleteTask = async (data) => {
-        const taskId = data._id
+        const taskId = data._id;
         try {
             const response = await axiosInstance.delete("/delete-task/" + taskId);
-
-            if(response.data && !response.data.error){
-                showToastMessage("Task deleted successfully", 'delete');
+            if (response.data && !response.data.error) {
+                showToast("Task completed successfully", 'success');
                 getAllTasks();
             }
         } catch (error) {
-            if (
-                error.response &&
-                error.response.data &&
-                error.response.data.message
-            ){
-                console.log("An unexpected error occured. Please try again");
-            }
+            console.log("An unexpected error occurred. Please try again");
         }
-    }
+    };
 
-    //Search Task
+    // Search Tasks
     const onSearchTask = async (query) => {
         try {
             const response = await axiosInstance.get("/search-tasks", {
-                params: {query},
+                params: { query },
             });
 
             if (response.data && response.data.tasks) {
                 setIsSearch(true);
-                setallTasks(response.data.tasks);
+                setAllTasks(response.data.tasks);
             }
         } catch (error) {
             console.log(error);
         }
-    }
+    };
 
     const handleClearSearch = () => {
         setIsSearch(false);
         getAllTasks();
     };
 
-    //Update isPinned Value
-
-    const updateisPinned = async (task) => {
+    const updateIsPinned = async (task) => {
         const taskId = task._id;
-
         try {
             const response = await axiosInstance.put("/update-task-pinned/" + taskId, {
                 isPinned: !task.isPinned,
             });
-
             if (response.data && response.data.task) {
-                showToastMessage("Task updated successfully", "update");
+                showToast("Task pinned successfully", "update");
                 getAllTasks();
             }
         } catch (error) {
             console.log(error);
         }
-    }
-    
+    };
+
     useEffect(() => {
         getAllTasks();
-        getUserInfo();
-        return () => {};
     }, []);
 
     return (
         <>
-            <Navbar userInfo = {userInfo} onSearchTask={onSearchTask} handleClearSearch={handleClearSearch}/>
-                <div className="container mx-auto px-60 mt-15 space-y-5 relative">
-                    <button 
-                    className="w-12 h-12 flex items-center justify-center rounded-2xl bg-lime-500 hover:bg-lime-400 hover:shadow-md hover:shadow-slate-400 absolute left-45" 
-                    onClick={() => {
-                        setOpenAddEditModal({
-                            isShow: true,
-                            type: "add",
-                            data: null,
-                        });
-                    }}>
-                    <MdAdd className="text-[32px] text-white" />
-                    </button>
-                    <button className = "w-12 h-12 flex items-center justify-center rounded-2xl bg-red-500 hover:bg-red-600 hover:shadow-md hover:shadow-slate-400 absolute left-45 top-15">
-                    <MdDelete className="text-[28px] text-white" />
-                    </button>
-                    {allTasks.length > 0 ? (<div className = "space-y-5">
-                    {allTasks.map((item, index) => (
-                    <TaskCard 
-                        key={item._id}
-                        title={item.title}
-                        date={item.createdOn}
-                        content={item.content}
-                        tags={item.tags}
-                        isPinned={item.isPinned}
-                        onEdit={() => handleEdit(item)}
-                        onDelete={() => handleDelete(item)}
-                        onPinNote={() => updateisPinned(item)}
-                        />))}
-                </div> ) : ( 
-                    <EmptyCard /> 
-                )}
+            <Navbar userInfo={userInfo} onSearchTask={onSearchTask} handleClearSearch={handleClearSearch} />
+            <div className="flex flex-row mt-10 justify-center">
+                <div className="">
+                    <SideMenu />
+                </div>
+                <div className="container mx-20 mt-15 space-y-5 max-w-2xl">
+                    {allTasks.length > 0 ? (
+                        <div className="space-y-5 pb-50">
+                            {allTasks.map((item) => (
+                                <TaskCard
+                                    key={item._id}
+                                    title={item.title}
+                                    date={item.createdOn}
+                                    dueDate={item.dueDate}
+                                    content={item.content}
+                                    tags={item.tags}
+                                    isPinned={item.isPinned}
+                                    onPinNote={() => updateIsPinned(item)}
+                                    onView={() => getTask(item._id)}
+                                    onEdit={() => handleEdit(item)} // Pass handleEdit to TaskCard
+                                    onDelete={() => deleteTask(item)}
+                                />
+                            ))}
+                        </div>
+                    ) : (
+                        <EmptyCard
+                            imgSrc={tripleBamboo}
+                            message={
+                                <>
+                                    <p className="whitespace-pre-wrap text-xl">
+                                        Nothing to see here!
+                                    </p>
+                                    <p>Need a new task? Go to the Task Page to create one!</p>
+                                </>
+                            }
+                        />
+                    )}
+                </div>
             </div>
+
             <Modal
-                isOpen={openAddEditModal.isShow}
-                onRequestClose={() => {}}
-                style={{
-                    overlay: {
-                        backgroundColor: "rgba(0, 0, 0, 0.5)",
-                    }
-                }}
-                contentLabel="Add Edit Modal"
-                className="w-[40%] max-h-3/4 bg-white rounded-md mx-auto mt-20 p-5 overflow-scroll"
-            >
-                <AddEditTasks 
-                    type={openAddEditModal.type}
-                    taskData={openAddEditModal.data}
-                    onClose={() => {
-                        setOpenAddEditModal({ isShown: false, type:"add", data:null});
+                    isOpen={openAddEditModal.isShow}
+                    onRequestClose={() => {}}
+                    style={{
+                        overlay: {
+                            backgroundColor: "rgba(0, 0, 0, 0.5)",
+                        },
                     }}
-                    getAllTasks = {getAllTasks}
-                    showToastMessage = {showToastMessage}
+                    contentLabel="Add Edit Modal"
+                    className="w-[40%] max-h-3/4 bg-white rounded-md mx-auto mt-20 p-5 overflow-scroll"
+                >
+                    <AddEditTasks
+                        type={openAddEditModal.type}
+                        taskData={openAddEditModal.data}
+                        onClose={() => {
+                            setOpenAddEditModal({ isShown: false, type: "add", data: null });
+                        }}
+                        getAllTasks={getAllTasks}
+                        showToastMessage={showToast}
                     />
-            </Modal>
-
-            <DeleteWarningModal
-                isOpen={deleteModal.isShow}
-                onRequestClose={cancelDelete}
-                onConfirm={confirmDelete}
+                </Modal>
+            <TaskViewModal
+                isOpen={viewTaskModal.isShow}
+                onRequestClose={() => setViewTaskModal({ isShow: false, task: null })}
+                task={viewTaskModal.task}
+                onEdit={() => handleEdit(viewTaskModal.task)} // Call handleEdit when edit button is clicked
             />
-
-            <Toast
-                isShown = {showToastMsg.isShown}
-                message = {showToastMsg.message}
-                type = {showToastMsg.type}
-                onClose = {handleCloseToast}
-            />
+            <Toast />
         </>
     );
 };
+
 export default Dashboard;

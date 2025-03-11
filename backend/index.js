@@ -6,7 +6,6 @@ const mongoose = require("mongoose");
 mongoose.connect(config.connectionString)
 
 
-
 const User = require("./models/user.model");
 const Task = require("./models/task.model");
 
@@ -16,7 +15,6 @@ const app = express();
 
 const jwt = require("jsonwebtoken");
 const {authenticateToken} = require("./utilities");
-const taskModel = require("./models/task.model");
 
 
 app.use(express.json());
@@ -29,10 +27,13 @@ app.use(
 
 
 app.get("/", (req, res) => {
-    res.json({data: "hello"});
+    res.json({data: "Task services working"});
 });
 
-// Create Account
+
+/**
+ * Create account
+ */
 app.post("/create-account", async (req, res) => {
 
     const {fullName, email, password} = req.body;
@@ -78,7 +79,10 @@ app.post("/create-account", async (req, res) => {
     })
 });
 
-// Login Account
+
+/**
+ * login Account
+ */
 app.post("/login", async (req, res) =>{
     const {email, password} = req.body;
 
@@ -116,7 +120,9 @@ app.post("/login", async (req, res) =>{
     }
 });
 
-//Get User
+/**
+ * Get user
+ */
 app.get("/get-user", authenticateToken, async (req, res) =>{
     const { user } = req.user;
 
@@ -136,81 +142,31 @@ app.get("/get-user", authenticateToken, async (req, res) =>{
     });
 });
 
-//Add Task
-app.post("/add-task", authenticateToken, async (req, res) =>{
-    const {title, content, tags} = req.body;
-    const {user} = req.user;
-
-    if(!title) {
-        return res.status(400).json({error:true, message: "Title is required"});
-    }
-
-    if(!content) {
-        return res.status(400).json({error:true, message: "Content is required"});
-    }
-   
-    try{
-
-        const task = new Task({
-            title,
-            content,
-            tags: tags || [],
-            userId: user._id,
-        });
-
-        await task.save();
-
-        return res.json({
-            error: false,
-            task,
-            message: "Task added successfully"
-        });
-    } catch (error){
-        return res.status(500).json({
-            error: true,
-            message: "Internal Server Error",
-        });
-    }
-});
-
-//Edit Task
-app.put("/edit-task/:taskId", authenticateToken, async (req, res) => {
+/**
+ * Get one task
+ */
+app.get("/get-task/:taskId", authenticateToken, async (req, res) => {
     const taskId = req.params.taskId;
-    const {title, content, tags, isPinned} = req.body;
     const { user } = req.user;
-
-    if(!title && !content && !tags){
-        return res.status(400).json({error: true, message: "No Changes provided"});
-    }
 
     try {
         const task = await Task.findOne({_id: taskId, userId: user._id});
-        
-        if(!task){
-            return res.status(400).json({error: true, message: "Task not found"});
-        }
-        if(title) task.title = title;
-        if(content) task.content = content;
-        if(tags) task.tags = tags;
-        if(isPinned) task.isPinned = isPinned;
 
-        await task.save();
-
-        return res.json({
-            error: false,
-            task,
-            message: "Task updated successfully",
-        });
-        } catch (error){
-            return res.status(500).json({
+        return res.json({error: false, tasks: task, message: "Task retrieved successfully"});
+    } catch (error) {
+        return res.status(500).json({
             error: true,
-            message: "Internal Server Error",
-        });
+            message: "Internal Server Error"
+        })
     }
-});
+})
 
-//Get all Task
+/**
+ * Get all tasks
+ */
 app.get("/get-all-tasks/", authenticateToken, async (req, res) => {
+
+    console.log("Get all task is working")
     const { user } = req.user;
 
     try {
@@ -229,7 +185,92 @@ app.get("/get-all-tasks/", authenticateToken, async (req, res) => {
     }
 });
 
-//Delete Task
+
+/**
+ * Add Task
+ */
+app.post("/add-task", authenticateToken, async (req, res) =>{
+    const {title, content, tags, dueDate} = req.body;
+    const {user} = req.user;
+
+    if(!title) {
+        return res.status(400).json({error:true, message: "Title is required"});
+    }
+
+    if(!content) {
+        return res.status(400).json({error:true, message: "Content is required"});
+    }
+   
+    try{
+
+        const task = new Task({
+            title,
+            content,
+            tags: tags || [],
+            dueDate,
+            userId: user._id,
+        });
+
+        await task.save();
+
+        return res.json({
+            error: false,
+            task,
+            message: "Task added successfully"
+        });
+    } catch (error){
+        return res.status(500).json({
+            error: true,
+            message: "Internal Server Error",
+        });
+    }
+});
+
+
+/**
+ * Edit Task
+ */
+app.put("/edit-task/:taskId", authenticateToken, async (req, res) => {
+    const taskId = req.params.taskId;
+    const {title, content, tags, dueDate, isPinned} = req.body;
+    const { user } = req.user;
+
+    if(!title && !content && !tags){
+        return res.status(400).json({error: true, message: "No Changes provided"});
+    }
+
+    try {
+        const task = await Task.findOne({_id: taskId, userId: user._id});
+        
+        if(!task){
+            return res.status(400).json({error: true, message: "Task not found"});
+        }
+        if(title) task.title = title;
+        if(content) task.content = content;
+        if(tags) task.tags = tags;
+        if(isPinned) task.isPinned = isPinned;
+        if(dueDate) task.dueDate = dueDate;
+
+        await task.save();
+
+        return res.json({
+            error: false,
+            task,
+            message: "Task updated successfully",
+        });
+        } catch (error){
+            return res.status(500).json({
+            error: true,
+            message: "Internal Server Error",
+        });
+    }
+});
+
+
+
+/**
+ * Delete Task
+ */
 app.delete("/delete-task/:taskId", authenticateToken, async (req, res) => {
     const taskId = req.params.taskId;
     const { user } = req.user;
@@ -255,7 +296,9 @@ app.delete("/delete-task/:taskId", authenticateToken, async (req, res) => {
     }
 })
 
-//Delete all Task
+/**
+ * Delete all task
+ */
 app.delete("/delete-all-tasks", authenticateToken, async (req, res) => {
     const { user } = req.user;
 
@@ -274,7 +317,9 @@ app.delete("/delete-all-tasks", authenticateToken, async (req, res) => {
     }
 })
 
-//Update isPinned Value
+/**
+ * Update pinned task
+ */
 app.put("/update-task-pinned/:taskId", authenticateToken, async (req, res) => {
     const taskId = req.params.taskId;
     const { isPinned } = req.body;
@@ -305,7 +350,9 @@ app.put("/update-task-pinned/:taskId", authenticateToken, async (req, res) => {
     }
 });
 
-//Search Tasks
+/**
+ * Search task
+ */
 app.get("/search-tasks/", authenticateToken, async (req, res) => {
     const { user } = req.user;
     const { query } = req.query;
@@ -331,6 +378,8 @@ app.get("/search-tasks/", authenticateToken, async (req, res) => {
         })
     }
 })
+
+
 app.listen(8080);
 
 module.exports = app;
